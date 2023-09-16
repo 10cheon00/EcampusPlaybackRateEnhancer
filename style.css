@@ -1,0 +1,17 @@
+.alert {
+  display: none !important;
+}
+
+.video-js .vjs-control-bar .vjs-playback-rate-visible .vjs-menu{
+  display: block !important;
+}
+
+/* 
+
+.video-js .vjs-control-bar .vjs-menu-content {
+  display: none;
+} */
+
+.vjs-menu-button-popup .vjs-menu .vjs-menu-content {
+  max-height: max-content !important;
+}

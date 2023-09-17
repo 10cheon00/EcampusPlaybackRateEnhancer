@@ -1,4 +1,4 @@
-const CLASS_PLAYBACKRATE_LISTITEM_VISIBLE = " vjs-playback-rate-visible"
+const CLASS_PLAYBACKRATE_LISTITEM_VISIBLE = " vjs-playback-rate-visible";
 
 const QUERY_ALERT = ".alert.alert-message.alert-danger";
 const QUERY_PLAYBACKRATE = ".vjs-playback-rate";
@@ -9,6 +9,8 @@ const QUERY_PLAYBACKRATE_VALUE_TEXT = ".vjs-menu-item-text";
 const QUERY_PLAYBACKRATE_VALUE = ".vjs-playback-rate-value";
 
 const REGEX_PLAYBACKRATE_LISTITEM_VISIBLE = / vjs-playback-rate-visible/g;
+
+const PLAYBACKRATE_TIME_INTERVAL = 50;
 
 class PlaybackRateLocalStorageController {
   KEY_PLAYBACK_RATE = "playbackRate";
@@ -27,71 +29,73 @@ class PlaybackRateLocalStorageController {
 const playbackRateLocalStorageController =
   new PlaybackRateLocalStorageController();
 
-class PlaybackRateController {
-  constructor() {
-    this.removeControllerElement();
-    this.createControllerElement();
-    this.addEventListenerToControllerElements();
+let videoEl = undefined;
+
+window.onload = () => {
+  if (isEnableToChangePlaybackRate()) {
+    replacePlaybackRateElement();
+  }
+};
+
+const isEnableToChangePlaybackRate = () => {
+  return document.querySelector(QUERY_PLAYBACKRATE_BUTTON) !== undefined;
+};
+
+const replacePlaybackRateElement = () => {
+  videoEl = document.querySelector("video");
+  addEventListenerToVideoElement();
+}
+
+const addEventListenerToVideoElement = () => {
+  videoEl.addEventListener("canplaythrough", () => {
+    removeControllerElement();
+    createControllerElement();
+    addEventListenerToControllerElements();
 
     playbackRateLocalStorageController.setPlaybackRate(1.0);
-    console.log(
-      `playback rate = ${playbackRateLocalStorageController.getPlaybackRate()}x`
-    );
+  });
+}
 
-    this.videoEl = document.querySelector("video");
+removeControllerElement= ()=> {
+  const e = document.querySelector(QUERY_PLAYBACKRATE);
+  if (e !== null) {
+    console.dir(e);
+    e.parentElement.removeChild(e);
   }
+}
 
-  removeControllerElement() {
-    const e = document.querySelector(QUERY_PLAYBACKRATE);
-    if (e !== null) {
-      console.dir(e);
-      e.parentElement.removeChild(e);
-    }
-  }
+createControllerElement = () => {
+  const controllerEl = document.createElement("div");
 
-  createControllerElement() {
-    const controllerEl = document.createElement("div");
+  let html = `<div class="vjs-playback-rate-value" id="vjs-playback-rate-value-label-my-video_component_222">1x</div><button class="vjs-playback-rate vjs-menu-button vjs-menu-button-popup vjs-button" type="button" aria-disabled="false" title="Playback Rate" aria-haspopup="true" aria-expanded="false" aria-describedby="vjs-playback-rate-value-label-my-video_component_222"><span class="vjs-icon-placeholder" aria-hidden="true"></span><span class="vjs-control-text" aria-live="polite">Playback Rate</span></button><div class="vjs-menu"><ul class="vjs-menu-content" role="menu">`;
+  const playbackRateList = [
+    0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9,
+    2.0,
+  ];
+  playbackRateList.reverse().forEach((playbackRate) => {
+    html += `<li class="vjs-menu-item" tabindex="-1" role="menuitemradio" aria-disabled="false" aria-checked="false"><span class="vjs-menu-item-text">${playbackRate}x</span><span class="vjs-control-text" aria-live="polite"></span></li>`;
+  });
+  html += `</ul></div>`;
+  controllerEl.innerHTML = html;
 
-    let html = `<div class="vjs-playback-rate-value" id="vjs-playback-rate-value-label-my-video_component_222">1x</div><button class="vjs-playback-rate vjs-menu-button vjs-menu-button-popup vjs-button" type="button" aria-disabled="false" title="Playback Rate" aria-haspopup="true" aria-expanded="false" aria-describedby="vjs-playback-rate-value-label-my-video_component_222"><span class="vjs-icon-placeholder" aria-hidden="true"></span><span class="vjs-control-text" aria-live="polite">Playback Rate</span></button><div class="vjs-menu"><ul class="vjs-menu-content" role="menu">`;
-    const playbackRateList = [
-      0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9,
-      2.0,
-    ];
-    playbackRateList.reverse().forEach((playbackRate) => {
-      html += `<li class="vjs-menu-item" tabindex="-1" role="menuitemradio" aria-disabled="false" aria-checked="false"><span class="vjs-menu-item-text">${playbackRate}x</span><span class="vjs-control-text" aria-live="polite"></span></li>`;
-    });
-    html += `</ul></div>`;
-    controllerEl.innerHTML = html;
+  const classNameList = [
+    "vjs-playback-rate",
+    "vjs-menu-button",
+    "vjs-menu-button-popup",
+    "vjs-control",
+    "vjs-button",
+  ];
+  classNameList.forEach((className) => controllerEl.classList.add(className));
 
-    const classNameList = [
-      "vjs-playback-rate",
-      "vjs-menu-button",
-      "vjs-menu-button-popup",
-      "vjs-control",
-      "vjs-button",
-    ];
-    classNameList.forEach((className) => controllerEl.classList.add(className));
+  const spacerEl = document.querySelector(
+    ".vjs-custom-control-spacer.vjs-spacer"
+  );
+  spacerEl.after(controllerEl);
+}
 
-    const spacerEl = document.querySelector(
-      ".vjs-custom-control-spacer.vjs-spacer"
-    );
-    spacerEl.after(controllerEl);
-  }
-
-  addEventListenerToControllerElements() {
-    addEventListenerToMenuButton();
-    addEventListenerToPlaybackRateListItems();
-  }
-
-  run() {
-    setInterval(() => {
-      this.videoEl.playbackRate =
-        playbackRateLocalStorageController.getPlaybackRate();
-
-      updatePlaybackRateValueElement();
-      removeAllAlertMessageElement();
-    });
-  }
+addEventListenerToControllerElements = () => {
+  addEventListenerToMenuButton();
+  addEventListenerToPlaybackRateListItems();
 }
 
 const addEventListenerToMenuButton = () => {
@@ -160,9 +164,14 @@ const removeAllAlertMessageElement = () => {
   alertMessageElements.forEach((e) => e.parentElement.removeChild(e));
 };
 
-window.onload = () => {
-  setTimeout(() => {
-    const controller = new PlaybackRateController();
-    controller.run();
-  }, 500);
-};
+// Disabled by ecampus policy
+//
+// const run = () => {
+//   setInterval(() => {
+//     videoEl.playbackRate =
+//       playbackRateLocalStorageController.getPlaybackRate();
+
+//     updatePlaybackRateValueElement();
+//     removeAllAlertMessageElement();
+//   }, PLAYBACKRATE_TIME_INTERVAL);
+// }
